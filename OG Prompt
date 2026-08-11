@@ -1,0 +1,126 @@
+This is my chat with Gemini that led to the creation of the script.
+
+is there a powertoy to append folder size to each name in within a folder of folders
+No official Microsoft PowerToy can append folder sizes directly to directory names. Windows File Explorer does not calculate or display folder sizes in real time because doing so across large directory trees can cause severe system lag.
+However, you can accomplish this cleanly using a PowerShell script or a third-party tool.
+
+Method 1: PowerShell Script (Built-in, No Extra Software)
+This script iterates through every subfolder in a target directory, calculates its total size in megabytes or gigabytes, and renames the folder to include that size (e.g., Documents becomes Documents [1.2 GB]).
+
+PowerShell
+$TargetDirectory = "C:\Path\To\Your\Folder"
+
+Get-ChildItem -Path $TargetDirectory -Directory | ForEach-Object {
+    $Folder = $_
+    
+    # Calculate total size of all files inside the subfolder
+    $SizeBytes = (Get-ChildItem -Path $Folder.FullName -Recurse -File -ErrorAction SilentlyContinue | 
+                  Measure-Object -Property Length -Sum).Sum
+                  
+    if ($null -ne $SizeBytes) {
+        # Format size into MB or GB
+        if ($SizeBytes -ge 1GB) {
+            $FormattedSize = "{0:N2} GB" -f ($SizeBytes / 1GB)
+        } else {
+            $FormattedSize = "{0:N2} MB" -f ($SizeBytes / 1MB)
+        }
+        
+        # Define new folder name
+        $NewName = "$($Folder.Name) [$FormattedSize]"
+        
+        # Rename the folder
+        Rename-Item -Path $Folder.FullName -NewName $NewName -ErrorAction SilentlyContinue
+    }
+}
+Note: If you run this script multiple times on the same folder, it will keep appending new sizes to the existing names.
+
+Method 2: Third-Party Utility Alternatives
+If you prefer a visual, dedicated tool rather than running scripts, these utilities handle folder size calculations or advanced renaming:
+TreeSize Free / WizTree: These tools do not rename the folders on disk, but they scan directory trees instantly and display folder sizes right next to their names in a clean UI.
+Bulk Rename Utility: A specialized Windows batch renamer that allows flexible regex and criteria rules if you need to strip or re-format appended size strings later.
+Want a script to safely strip appended sizes from folder names?
+
+Yes
+
+crreate that script with this extra feature: Append using format nnnnn_size.ext and update size when rerun using _ and . as terminators the the 'size' field.
+Here is a PowerShell script that calculates each subfolder's total size, formats it as Foldername_size.ext, and automatically replaces the existing size suffix if you re-run it later.
+Since standard directories don't natively use file extensions, this script treats everything after the last period (.) as the .ext extension, or appends _size at the end if there is no dot in the name.
+
+PowerShell
+$TargetDirectory = "C:\Path\To\Your\Folder"
+
+Get-ChildItem -Path $TargetDirectory -Directory | ForEach-Object {
+    $Folder = $_
+    $OriginalName = $Folder.Name
+    
+    # Calculate total size of all files inside the subfolder
+    $SizeBytes = (Get-ChildItem -Path $Folder.FullName -Recurse -File -ErrorAction SilentlyContinue | 
+                  Measure-Object -Property Length -Sum).Sum
+                  
+    if ($null -ne $SizeBytes) {
+        # Format size into MB or GB
+        if ($SizeBytes -ge 1GB) {
+            $FormattedSize = "{0:N2}GB" -f ($SizeBytes / 1GB)
+        } else {
+            $FormattedSize = "{0:N2}MB" -f ($SizeBytes / 1MB)
+        }
+
+        # Handle updating existing names formatted as 'nnnnn_size.ext' or 'nnnnn_size'
+        # Regular Expression breaks the name down:
+        # ^(?<Base>.*?)(?:_[^_]+)?(?<Ext>\.[^.]+)?$
+        if ($OriginalName -match '^(?<Base>.*?)(?:_[^_]+)?(?<Ext>\.[^.]+)?$') {
+            $BaseName  = $Matches['Base']
+            $Extension = $Matches['Ext'] # Will be empty string if no extension exists
+            
+            # Construct updated name: BaseName + _size + Extension
+            $NewName = "${BaseName}_${FormattedSize}${Extension}"
+            
+            # Rename if the name actually changed
+            if ($NewName -ne $OriginalName) {
+                Rename-Item -Path $Folder.FullName -NewName $NewName -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+How the RegEx Replacement Works
+Base Name Extraction ((?<Base>.*?)): Captures the core folder name before the _ delimiter.
+Size Strip ((?:_[^_]+)?): Detects and discards any existing size payload prefixed by an underscore (e.g., _1.25GB or _450.00MB) so re-running updates the size rather than stacking multiple suffixes.
+Extension Preservation ((?<Ext>\.[^.]+)?$): Isolates the trailing .ext segment so the new size string is injected directly between the underscore and the extension dot.
+Want to add a dry-run flag to test folder renames without modifying disk?
+
+Yes
+
+what is the diff between powershell and powershell 7 in start menu win11
+In the Windows 11 Start menu, PowerShell and PowerShell 7 point to two completely different engines built on different underlying software frameworks:
+Feature	PowerShell (Windows PowerShell)	PowerShell 7
+Executable Name	powershell.exe	pwsh.exe
+Framework	Built on legacy .NET Framework (v4.x)	Built on modern, cross-platform .NET Core
+Version	Stuck at v5.1 (No new feature updates)	v7.x (Actively developed and updated)
+OS Compatibility	Windows-only	Cross-platform (Windows, macOS, Linux)
+Performance	Slower execution & startup time	Up to 3–5x faster multi-threading (ForEach-Object -Parallel)
+Default In Win11	Pre-installed out of the box	Installed separately via Winget, Store, or MSI
+Target Path	C:\Windows\System32\WindowsPowerShell\v1.0\	C:\Program Files\PowerShell\7\
+Key Functional Differences
+ForEach-Object -Parallel: PowerShell 7 natively supports parallel execution to run loops concurrently across multiple CPU threads. Windows PowerShell 5.1 runs loops sequentially (single-threaded).
+Modern Syntax Operators: PowerShell 7 introduces pipeline operators like the Ternary operator (a ? b : c), Null-coalescing (??), and Null-assignment (??=).
+Error Views: PowerShell 7 defaults to a simplified ConciseView that highlights the line and exact reason for a script error rather than flooding the console with multi-line red call stacks.
+Module Compatibility: While PowerShell 7 can load legacy Windows modules via an inline compatibility layer, a tiny subset of older WMI or COM-dependent Windows modules only function natively inside Windows PowerShell 5.1.
+Unless you are running a legacy enterprise script built specifically for .NET Framework 4.x, PowerShell 7 (pwsh) is the recommended default for all scripting and command-line work.
+Want to set PowerShell 7 as the default profile in Windows Terminal?
+
+Yes
+append_size.ps1:5
+
+Line |
+   5 |  Get-ChildItem -Path $TargetDirectory -Directory | ForEach-Object {
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path 'C:\Path\To\Your\Folder' because it does not exist
+
+The error occurs because line 1 of append_size.ps1 still contains the placeholder path "C:\Path\To\Your\Folder".
+Open C:\Users\mike\TEST\append_size.ps1 in your text editor and change Line 1 to point to your actual folder path:
+
+PowerShell
+$TargetDirectory = "C:\Users\mike\TEST"  # <--- Change this to your target path
+If you want the script to automatically run against the folder it lives in without having to hardcode a path every time, replace line 1 with:
+PowerShell
+$TargetDirectory = $PSScriptRoot
