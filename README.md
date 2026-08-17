@@ -16,3 +16,5 @@ This repository contains links to my recent "vibe-coding" projects and demos. Th
 
 - These are demos and quick projects intended as examples; they may be incomplete or stop working if their hosting or dependencies change.
 - If you'd like one of these expanded or reproduced, open an issue or submit a pull request.
+
+- formatted from plain text by Github CoPilot
