@@ -1,3 +1,4 @@
+This repo contains links to my recent vibe-coding projects and demo's. They may break or fail, use at your own risk.
 # append_size.ps1
 
 This repository contains a PowerShell script that appends the size of each subfolder to its folder name.
