@@ -6,7 +6,7 @@ This repository contains links to my recent "vibe-coding" projects and demos. Th
 
 - `append_size.ps1` — Windows PowerShell script for Windows 11 to add folder-size metadata to help with archiving to media with size limits (for example, DVD).
 
-- NutriTrackDemo — a simple diet-tracking demo inspired by OpenNutri:
+- NutriTrackDemo — a simple diet-tracking demo inspired by OpenNutri: (https://github.com/simonoppowa/OpenNutriTracker)
   https://saintsoft.co.uk/OpenNutri/NutriTrackDemo/
 
 - Platewise Pal — a demo app created with Lovable at the MK Vibe Coding event (built using free credits):
